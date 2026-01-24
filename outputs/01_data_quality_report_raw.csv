@@ -1,0 +1,9 @@
+,dtype,non_null_count,null_count,null_pct,unique_values,unique_pct
+timestamp,object,173967,0,0.0,61855,35.56
+density_kg_m3,float64,170289,3678,2.11,3121,1.79
+pressure_diff_kpa,float64,170289,3678,2.11,115754,66.54
+pressure_kpa,float64,170289,3678,2.11,133663,76.83
+temperature_c,float64,170289,3678,2.11,41878,24.07
+hourly_flow_m3,float64,170289,3678,2.11,30311,17.42
+total_flow_m3,float64,170289,3678,2.11,119453,68.66
+location,object,173967,0,0.0,3,0.0
