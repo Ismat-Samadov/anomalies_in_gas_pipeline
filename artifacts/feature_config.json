@@ -1,0 +1,35 @@
+{
+  "feature_columns": [
+    "density_kg_m3",
+    "pressure_diff_kpa",
+    "pressure_kpa",
+    "temperature_c",
+    "hourly_flow_m3",
+    "total_flow_m3",
+    "hour",
+    "day_of_week",
+    "month",
+    "year",
+    "loc_Mardakan",
+    "loc_Sumqayit",
+    "loc_Turkan"
+  ],
+  "sensor_features": [
+    "density_kg_m3",
+    "pressure_diff_kpa",
+    "pressure_kpa",
+    "temperature_c",
+    "hourly_flow_m3",
+    "total_flow_m3"
+  ],
+  "temporal_features": [
+    "hour",
+    "day_of_week",
+    "month",
+    "year"
+  ],
+  "n_features": 13,
+  "best_model_name": "Local Outlier Factor",
+  "contamination_rate": 0.01,
+  "random_seed": 42
+}
