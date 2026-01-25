@@ -22,38 +22,38 @@ class PipelineDataSimulator:
         # Locations
         self.locations = ["Mardakan", "Sumqayit", "Turkan"]
 
-        # Base operational parameters (from actual data analysis)
-        # These represent normal operating conditions
+        # Base operational parameters (from ACTUAL training data statistics)
+        # These MUST match the training data to avoid false anomalies
         self.base_params = {
             "density_kg_m3": {
-                "mean": 0.74,
-                "std": 0.02,
+                "mean": 0.739,
+                "std": 0.014,
                 "min": 0.65,
                 "max": 0.85
             },
             "pressure_diff_kpa": {
-                "mean": 12.5,
-                "std": 3.2,
-                "min": 5.0,
-                "max": 25.0
+                "mean": 9.21,
+                "std": 8.03,
+                "min": 0.0,
+                "max": 69.13
             },
             "pressure_kpa": {
-                "mean": 485.0,
-                "std": 45.0,
-                "min": 350.0,
-                "max": 650.0
+                "mean": 485.65,
+                "std": 95.80,
+                "min": 300.0,
+                "max": 770.97
             },
             "temperature_c": {
-                "mean": 25.0,
-                "std": 15.0,
-                "min": -10.0,
-                "max": 45.0
+                "mean": 16.32,
+                "std": 17.37,
+                "min": -34.57,
+                "max": 50.0
             },
             "hourly_flow_m3": {
-                "mean": 12500.0,
-                "std": 3500.0,
-                "min": 5000.0,
-                "max": 25000.0
+                "mean": 8.19,
+                "std": 11.39,
+                "min": 0.0,
+                "max": 56.99
             }
         }
 
@@ -76,21 +76,23 @@ class PipelineDataSimulator:
 
         # Simulation state
         self.current_location_idx = 0
-        self.cumulative_flow = np.random.uniform(1e6, 5e6)
+        # Initialize cumulative flow to match training data range (0 to 1367.77)
+        self.cumulative_flow = np.random.uniform(0, 1000)
         self.last_timestamp = datetime.now()
 
     def _get_hourly_multiplier(self, hour: int) -> float:
         """
         Get demand multiplier based on hour of day
         Peak demand during day, lower at night
+        REDUCED multipliers to stay within training data range
         """
         # Base pattern: higher during day (7-22), lower at night (23-6)
         if 7 <= hour <= 22:
-            return np.random.uniform(1.1, 1.3)  # Day - higher demand
+            return np.random.uniform(1.0, 1.1)  # Day - slightly higher demand
         elif 3 <= hour <= 6:
-            return np.random.uniform(0.7, 0.9)   # Early morning - lowest demand
+            return np.random.uniform(0.9, 0.95)   # Early morning - slightly lower demand
         else:
-            return np.random.uniform(0.85, 1.05)  # Night/transition
+            return np.random.uniform(0.95, 1.05)  # Night/transition
 
     def _inject_anomaly(self, data: Dict[str, float], hour: int) -> Dict[str, float]:
         """

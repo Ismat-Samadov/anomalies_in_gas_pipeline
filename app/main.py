@@ -29,13 +29,18 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 ARTIFACTS_DIR = BASE_DIR.parent / "artifacts"
 try:
     pipeline = joblib.load(ARTIFACTS_DIR / "production_pipeline.joblib")
-    feature_config = json.load(open(ARTIFACTS_DIR / "feature_config.json"))
+    with open(ARTIFACTS_DIR / "feature_config.json", 'r') as f:
+        feature_config = json.load(f)
     MODEL_LOADED = True
-    print("✓ Production model loaded successfully")
+    print("✓ ML Model loaded successfully")
+    print(f"  Model: {feature_config['model_name']}")
+    print(f"  Features: {feature_config['n_features']}")
+    print(f"  Training samples: {feature_config['training_samples']:,}")
+    print(f"  Expected anomaly rate: {feature_config['contamination_rate']*100:.1f}%")
 except Exception as e:
     MODEL_LOADED = False
-    print(f"⚠ Warning: Could not load model - {e}")
-    print("  Running in simulation-only mode")
+    print(f"⚠ ML model loading failed: {e}")
+    print("  Running in simulation mode")
 
 # Initialize data simulator
 simulator = PipelineDataSimulator()
