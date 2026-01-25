@@ -8,7 +8,8 @@
 // ============================================================
 
 const CONFIG = {
-    wsUrl: `ws://${window.location.host}/ws/realtime`,
+    // Automatically use wss:// for HTTPS and ws:// for HTTP
+    wsUrl: `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/realtime`,
     maxDataPoints: 20,
     reconnectDelay: 3000,
     chartUpdateInterval: 100
