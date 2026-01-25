@@ -115,8 +115,9 @@ async def websocket_endpoint(websocket: WebSocket):
                         if col not in df.columns:
                             df[col] = 0
 
-                    # Select features in correct order
-                    X = df[feature_config['feature_columns']]
+                    # Select features in correct order and convert to numpy array
+                    # (avoids feature names warning from sklearn)
+                    X = df[feature_config['feature_columns']].values
 
                     # Predict anomaly
                     prediction = pipeline.predict(X)[0]
@@ -154,7 +155,11 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         print(f"WebSocket error: {e}")
     finally:
-        await websocket.close()
+        # Only close if not already closed
+        try:
+            await websocket.close()
+        except RuntimeError:
+            pass  # Already closed
 
 
 @app.get("/api/weather")
