@@ -105,17 +105,17 @@ async def websocket_endpoint(websocket: WebSocket):
                     df['month'] = df['timestamp'].dt.month
                     df['year'] = df['timestamp'].dt.year
 
-                    # One-hot encode location
-                    location_dummies = pd.get_dummies(df['location'], prefix='location')
+                    # One-hot encode location (use 'loc' prefix to match training)
+                    location_dummies = pd.get_dummies(df['location'], prefix='loc')
                     df = pd.concat([df, location_dummies], axis=1)
 
                     # Ensure all required columns exist
-                    for col in feature_config['feature_names']:
+                    for col in feature_config['feature_columns']:
                         if col not in df.columns:
                             df[col] = 0
 
                     # Select features in correct order
-                    X = df[feature_config['feature_names']]
+                    X = df[feature_config['feature_columns']]
 
                     # Predict anomaly
                     prediction = pipeline.predict(X)[0]
