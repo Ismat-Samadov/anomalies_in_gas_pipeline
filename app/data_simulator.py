@@ -23,10 +23,16 @@ class PipelineDataSimulator:
         # Load actual historical data
         data_dir = Path(__file__).parent.parent / "data"
 
-        # Load data from all locations
-        mardakan = pd.read_csv(data_dir / "Mardakan.csv")
-        sumqayit = pd.read_csv(data_dir / "Sumqayit.csv")
-        turkan = pd.read_csv(data_dir / "Turkan.csv")
+        # Check if data files exist (for production deployment)
+        try:
+            # Load data from all locations
+            mardakan = pd.read_csv(data_dir / "Mardakan.csv")
+            sumqayit = pd.read_csv(data_dir / "Sumqayit.csv")
+            turkan = pd.read_csv(data_dir / "Turkan.csv")
+        except FileNotFoundError:
+            print("⚠ Data files not found - using fallback synthetic generation")
+            self._init_synthetic_mode()
+            return
 
         # Add location column
         mardakan['location'] = 'Mardakan'
@@ -59,6 +65,7 @@ class PipelineDataSimulator:
 
         # Store the clean data pool
         self.data_pool = all_data.reset_index(drop=True)
+        self.use_real_data = True
 
         print(f"✓ Data simulator initialized with {len(self.data_pool):,} historical samples")
 
@@ -72,30 +79,70 @@ class PipelineDataSimulator:
             'total_flow_m3': 0.005
         }
 
+    def _init_synthetic_mode(self):
+        """Initialize synthetic mode when data files are not available"""
+        self.use_real_data = False
+        self.locations = ["Mardakan", "Sumqayit", "Turkan"]
+        self.current_location_idx = 0
+
+        # Use training statistics for synthetic generation
+        # These match the actual training data distribution
+        self.base_params = {
+            "density_kg_m3": {"mean": 0.739, "std": 0.014, "min": 0.65, "max": 0.85},
+            "pressure_diff_kpa": {"mean": 9.21, "std": 8.03, "min": 0.0, "max": 69.13},
+            "pressure_kpa": {"mean": 485.65, "std": 95.80, "min": 300.0, "max": 770.97},
+            "temperature_c": {"mean": 16.32, "std": 17.37, "min": -34.57, "max": 50.0},
+            "hourly_flow_m3": {"mean": 8.19, "std": 11.39, "min": 0.0, "max": 56.99},
+            "total_flow_m3": {"mean": 196.57, "std": 273.29, "min": 0.0, "max": 1367.77}
+        }
+
+        print("✓ Data simulator initialized in synthetic mode")
+
     def generate_data_point(self) -> Dict[str, Any]:
         """
-        Generate a single realistic data point by sampling from historical data
+        Generate a single realistic data point
         """
-        # Randomly sample a row from historical data
-        sample_idx = np.random.randint(0, len(self.data_pool))
-        sample = self.data_pool.iloc[sample_idx].copy()
+        if self.use_real_data:
+            # Sample from historical data with small perturbations
+            sample_idx = np.random.randint(0, len(self.data_pool))
+            sample = self.data_pool.iloc[sample_idx].copy()
 
-        # Add small random perturbations to make each sample unique
-        # This preserves correlations while adding variability
-        for sensor, noise_level in self.noise_levels.items():
-            if sensor in sample:
-                # Add noise: ± noise_level percent of the value
-                noise = np.random.uniform(-noise_level, noise_level)
-                sample[sensor] = sample[sensor] * (1 + noise)
+            # Add small random perturbations to make each sample unique
+            # This preserves correlations while adding variability
+            for sensor, noise_level in self.noise_levels.items():
+                if sensor in sample:
+                    # Add noise: ± noise_level percent of the value
+                    noise = np.random.uniform(-noise_level, noise_level)
+                    sample[sensor] = sample[sensor] * (1 + noise)
 
-                # Ensure non-negative values for physical sensors
-                if sample[sensor] < 0:
-                    sample[sensor] = abs(sample[sensor]) * 0.1
+                    # Ensure non-negative values for physical sensors
+                    if sample[sensor] < 0:
+                        sample[sensor] = abs(sample[sensor]) * 0.1
 
-        # Update timestamp to current time
-        sample['timestamp'] = datetime.now()
+            # Update timestamp to current time
+            sample['timestamp'] = datetime.now()
 
-        return sample.to_dict()
+            return sample.to_dict()
+        else:
+            # Synthetic mode - generate from statistical parameters
+            # Rotate through locations
+            location = self.locations[self.current_location_idx]
+            self.current_location_idx = (self.current_location_idx + 1) % len(self.locations)
+
+            # Generate sensor readings
+            data = {}
+            for sensor, params in self.base_params.items():
+                # Generate value with normal distribution
+                value = np.random.normal(params["mean"], params["std"])
+                # Clip to realistic bounds
+                value = np.clip(value, params["min"], params["max"])
+                data[sensor] = value
+
+            # Add metadata
+            data["timestamp"] = datetime.now()
+            data["location"] = location
+
+            return data
 
     def generate_batch(self, n: int = 100) -> pd.DataFrame:
         """
