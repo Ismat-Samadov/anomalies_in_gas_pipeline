@@ -44,6 +44,7 @@ body {
     font-size: 2.8rem;
     background: linear-gradient(135deg, #00d4ff, #00ff88, #00d4ff);
     background-size: 200% auto;
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: gradientShift 3s ease infinite;
